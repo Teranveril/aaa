@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Services\PetApiService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class PetController extends Controller
@@ -14,60 +15,15 @@ class PetController extends Controller
     {
         $this->petApiService = $petApiService;
     }
-
-    public function index(): \Illuminate\Http\JsonResponse
+    public function index(Request $request): JsonResponse
     {
         try {
-            $pets = $this->petApiService->getPets();
+            $status = $request->query('status', 'available');
+            $pets = $this->petApiService->getPetsByStatus($status);
             return response()->json($pets);
         } catch (\Exception $e) {
-            return response()->json(['error' => $e->getMessage()], $this->getStatusCodeFromException($e));
+            return response()->json(['error' => $e->getMessage()], 500);
         }
     }
 
-    public function store(Request $request): \Illuminate\Http\JsonResponse
-    {
-        try {
-            $pet = $this->petApiService->createPet($request->all());
-            return response()->json($pet, 201); // 201 Created
-        } catch (\Exception $e) {
-            return response()->json(['error' => $e->getMessage()], $this->getStatusCodeFromException($e));
-        }
-    }
-
-    public function show($id): \Illuminate\Http\JsonResponse
-    {
-        try {
-            $pet = $this->petApiService->getPetById($id);
-            return response()->json($pet);
-        } catch (\Exception $e) {
-            return response()->json(['error' => $e->getMessage()], $this->getStatusCodeFromException($e));
-        }
-    }
-
-    public function update(Request $request, $id): \Illuminate\Http\JsonResponse
-    {
-        try {
-            $pet = $this->petApiService->updatePet($id, $request->all());
-            return response()->json($pet);
-        } catch (\Exception $e) {
-            return response()->json(['error' => $e->getMessage()], $this->getStatusCodeFromException($e));
-        }
-    }
-
-    public function destroy($id): \Illuminate\Http\JsonResponse
-    {
-        try {
-            $this->petApiService->deletePet($id);
-            return response()->json(['message' => 'Zwierzę zostało usunięte']);
-        } catch (\Exception $e) {
-            return response()->json(['error' => $e->getMessage()], $this->getStatusCodeFromException($e));
-        }
-    }
-
-    protected function getStatusCodeFromException(\Exception $e)
-    {
-        $previous = $e->getPrevious();
-        return $previous && method_exists($previous, 'response') ? $previous->response()->status() : 500;
-    }
 }

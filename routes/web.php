@@ -1,30 +1,18 @@
 <?php
 
-use App\Services\PetApiService;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\PetWebController;
-use App\Http\Controllers\Api\PetController as ApiPetController;
+use App\Http\Controllers\Api\PetController;
 
-Route::get('/', function () {
-    return view('welcome');
-});
+/*
+|--------------------------------------------------------------------------
+| API Routes
+|--------------------------------------------------------------------------
+|
+| Here is where you can register API routes for your application. These
+| routes are loaded by the RouteServiceProvider within a group which
+| is assigned the "api" middleware group. Enjoy building your API!
+|
+*/
 
-Route::prefix('api/pets')->group(function () {
-    Route::get('/', [ApiPetController::class, 'index']);
-    Route::post('/', [ApiPetController::class, 'store']);
-    Route::get('/{id}', [ApiPetController::class, 'show']);
-    Route::put('/{id}', [ApiPetController::class, 'update']);
-    Route::delete('/{id}', [ApiPetController::class, 'destroy']);
-});
-
-Route::resource('pets', PetWebController::class);
-
-Route::get('/test-swagger', function () {
-    $petApiService = new PetApiService();
-    try {
-        $inventory = $petApiService->getPets(); // Teraz getPets() pobiera inwentarz
-        dd($inventory);
-    } catch (\Exception $e) {
-        dd('Wystąpił błąd: ' . $e->getMessage());
-    }
-});
+Route::get('/pets', [PetController::class, 'index']);

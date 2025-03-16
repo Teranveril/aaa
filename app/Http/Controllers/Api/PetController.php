@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Services\PetApiService;
+use GuzzleHttp\Client;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -15,15 +16,13 @@ class PetController extends Controller
     {
         $this->petApiService = $petApiService;
     }
-    public function index(Request $request): JsonResponse
-    {
-        try {
-            $status = $request->query('status', 'available');
-            $pets = $this->petApiService->getPetsByStatus($status);
-            return response()->json($pets);
-        } catch (\Exception $e) {
-            return response()->json(['error' => $e->getMessage()], 500);
-        }
+    public function index() {
+        $client = new Client();
+        $response = $client->get('https://petstore.swagger.io/v2/pet/findByStatus', [
+            'query' => ['status' => 'available']
+        ]);
+        $pets = json_decode($response->getBody());
+        return view('pets.index', ['pets' => $pets]);
     }
 
 }

@@ -1,36 +1,58 @@
 <?php
+
 namespace App\Services;
 
-use GuzzleHttp\Client;
-use GuzzleHttp\Exception\GuzzleException;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
-class PetService {
-    private $client;
-    private $baseUrl = 'https://petstore.swagger.io/v2/pet';
+class PetService
+{
+    protected string $baseUrl;
 
-    public function __construct() {
-        $this->client = new Client();
+    public function __construct()
+    {
+        $this->baseUrl = config('services.petstore.url');
     }
 
-    // Pobierz zwierzęta po statusie
-    public function getPetsByStatus(string $status): array {
-        $response = $this->client->get("{$this->baseUrl}/findByStatus", [
-            'query' => ['status' => $status]
-        ]);
-        return json_decode($response->getBody(), true); // ✅ Zwraca tablicę asocjacyjną
-    }
-
-    // Dodaj nowe zwierzę (przykład – dostosuj do API Petstore)
-    public function createPet(array $data): array {
-        try {
-            $response = $this->client->post($this->baseUrl, [
-                'json' => $data
-            ]);
-            return json_decode($response->getBody(), true);
-        } catch (GuzzleException $e) {
-            throw new \Exception("API Error: " . $e->getMessage());
+    // Unified error handling
+    private function handleResponse($response)
+    {
+        if ($response->failed()) {
+            Log::error("PetStore API Error: {$response->body()}");
+            throw new \Exception("API request failed: {$response->status()}");
         }
+
+        return $response->json();
     }
 
-    // ... inne metody (update, delete)
+    // All CRUD methods
+    public function createPet(array $data)
+    {
+        $response = Http::post("{$this->baseUrl}/pet", $data);
+        return $this->handleResponse($response);
+    }
+
+    public function getPet(int $id)
+    {
+        $response = Http::get("{$this->baseUrl}/pet/{$id}");
+        return $this->handleResponse($response);
+    }
+
+    public function updatePet(int $id, array $data)
+    {
+        $response = Http::put("{$this->baseUrl}/pet/{$id}", $data);
+        return $this->handleResponse($response);
+    }
+
+    public function deletePet(int $id)
+    {
+        $response = Http::delete("{$this->baseUrl}/pet/{$id}");
+        return $this->handleResponse($response);
+    }
+
+    public function listPets(string $status = 'available')
+    {
+        $response = Http::get("{$this->baseUrl}/pet/findByStatus", ['status' => $status]);
+        return $this->handleResponse($response);
+    }
 }

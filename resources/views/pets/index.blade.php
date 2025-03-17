@@ -1,16 +1,13 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>Pets</title>
 </head>
 <body>
 <h1>Lista Zwierząt</h1>
 <ul>
     @foreach ($pets as $pet)
-        <li>{{ $pet['name'] }} - {{ $pet['status'] }}</li>
+        <li>{{ $pet->name ?? 'Brak nazwy' }} - {{ $pet->status ?? 'Brak statusu' }}</li>
     @endforeach
 </ul>
 </body>

@@ -1,5 +1,5 @@
 <?php
-namespace App\Http\Controllers\Api;
+namespace App\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
 use App\Services\PetService;
@@ -12,17 +12,22 @@ class PetController extends Controller {
         $this->petService = $petService;
     }
 
-    // Pobierz zwierzęta (JSON)
+    // Lista zwierząt (widok)
     public function index() {
         try {
             $pets = $this->petService->getPetsByStatus('available');
-            return response()->json($pets);
+            return view('pets.index', ['pets' => $pets]);
         } catch (\Exception $e) {
-            return response()->json(['error' => $e->getMessage()], 500);
+            return redirect()->back()->with('error', $e->getMessage());
         }
     }
 
-    // Dodaj zwierzę (POST)
+    // Formularz dodawania
+    public function create() {
+        return view('pets.create');
+    }
+
+    // Zapisz zwierzę (POST)
     public function store(Request $request) {
         $validated = $request->validate([
             'name' => 'required|string',
@@ -30,10 +35,10 @@ class PetController extends Controller {
         ]);
 
         try {
-            $pet = $this->petService->createPet($validated);
-            return response()->json($pet, 201);
+            $this->petService->createPet($validated);
+            return redirect()->route('pets.index')->with('success', 'Dodano!');
         } catch (\Exception $e) {
-            return response()->json(['error' => $e->getMessage()], 400);
+            return back()->with('error', $e->getMessage());
         }
     }
 }

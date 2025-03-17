@@ -14,14 +14,10 @@ class PetService {
 
     // Pobierz zwierzęta po statusie
     public function getPetsByStatus(string $status): array {
-        try {
-            $response = $this->client->get("{$this->baseUrl}/findByStatus", [
-                'query' => ['status' => $status]
-            ]);
-            return json_decode($response->getBody(), true);
-        } catch (GuzzleException $e) {
-            throw new \Exception("API Error: " . $e->getMessage());
-        }
+        $response = $this->client->get("{$this->baseUrl}/findByStatus", [
+            'query' => ['status' => $status]
+        ]);
+        return json_decode($response->getBody(), true); // ✅ Zwraca tablicę asocjacyjną
     }
 
     // Dodaj nowe zwierzę (przykład – dostosuj do API Petstore)

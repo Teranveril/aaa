@@ -1,39 +1,51 @@
 <?php
+
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Services\PetService;
-use Illuminate\Http\Request;
 
 class PetController extends Controller {
-    protected $petService;
+    public function __construct(
+        protected PetService $petService
+    ) {}
 
-    public function __construct(PetService $petService) {
-        $this->petService = $petService;
-    }
-
-    // Pobierz zwierzęta (JSON)
     public function index() {
-        try {
-            $pets = $this->petService->getPetsByStatus('available');
-            return response()->json($pets);
-        } catch (\Exception $e) {
-            return response()->json(['error' => $e->getMessage()], 500);
-        }
+        $pets = $this->petService->getPetsByStatus('available');
+        return response()->json($pets);
     }
 
-    // Dodaj zwierzę (POST)
-    public function store(Request $request) {
+    public function store(Request $request)
+    {
         $validated = $request->validate([
             'name' => 'required|string',
             'status' => 'required|in:available,pending,sold'
         ]);
 
-        try {
-            $pet = $this->petService->createPet($validated);
-            return response()->json($pet, 201);
-        } catch (\Exception $e) {
-            return response()->json(['error' => $e->getMessage()], 400);
-        }
+        $pet = $this->petService->createPet($validated);
+        return response()->json($pet, 201);
+    }
+
+    public function show(string $id)
+    {
+        $pet = $this->petService->getPetById($id);
+        return response()->json($pet);
+    }
+
+    public function update(Request $request, string $id)
+    {
+        $validated = $request->validate([
+            'name' => 'string',
+            'status' => 'in:available,pending,sold'
+        ]);
+
+        $pet = $this->petService->updatePet($id, $validated);
+        return response()->json($pet);
+    }
+
+    public function destroy(string $id)
+    {
+        $this->petService->deletePet($id);
+        return response()->noContent();
     }
 }

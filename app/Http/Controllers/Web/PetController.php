@@ -19,13 +19,14 @@ class PetController extends Controller
     {
         try {
             $currentTag = $request->input('tag', session('user_tag', 'default_tag'));
+            session()->put('user_tag', $currentTag);
+
             $pets = $this->petService->getAllPets($currentTag);
 
             return view('pets.index', [
                 'pets' => $pets,
                 'currentTag' => $currentTag
             ]);
-
         } catch (\Exception $e) {
             return redirect()->back()->with('error', $e->getMessage());
         }
@@ -39,16 +40,15 @@ class PetController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
+            'name' => 'required',
             'status' => 'required|in:available,pending,sold',
             'photoUrls' => 'required|array',
-            'photoUrls.*' => 'url',
-            'user_tag' => 'required|string|max:50'
+            'user_tag' => 'required|string' // Dodaj to pole
         ]);
 
         try {
             $this->petService->createPet($validated, $validated['user_tag']);
-            return redirect()->route('web.pets.index')->with('success', 'Pet created successfully!');
+            return redirect()->route('web.pets.index')->with('success', 'Pet created!');
         } catch (\Exception $e) {
             return back()->withInput()->with('error', $e->getMessage());
         }
@@ -57,27 +57,40 @@ class PetController extends Controller
     public function edit($id)
     {
         try {
-            $pet = $this->petService->getPetById($id);
+            $pet = $this->petService->getPet($id);
             return view('pets.edit', compact('pet'));
         } catch (\Exception $e) {
-            return redirect()->route('web.pets.index')->with('error', $e->getMessage());
+            return redirect()->route('web.pets.index')
+                ->with('error', 'Cannot edit pet from other category');
         }
     }
 
     public function update(Request $request, $id)
     {
+        $request->merge(['id' => (int)$id]);
+
         $validated = $request->validate([
+            'id' => 'required|integer|min:1',
             'name' => 'required|string|max:255',
             'status' => 'required|in:available,pending,sold',
-            'photoUrls' => 'required|array',
-            'photoUrls.*' => 'url'
+            'photoUrls' => 'required'
         ]);
 
+        // Przetwórz URL-e zdjęć
+        $validated['photoUrls'] = array_filter(
+            explode("\n", $validated['photoUrls'])
+        );
+
         try {
-            $this->petService->updatePet($id, $validated);
-            return redirect()->route('web.pets.index')->with('success', 'Pet updated successfully!');
+            $userTag = session('user_tag', 'default_tag');
+            $this->petService->updatePet($id, $validated, $userTag);
+            return redirect()->route('web.pets.index')->with('success', 'Pet updated!');
         } catch (\Exception $e) {
-            return back()->withInput()->with('error', $e->getMessage());
+            \Log::error('Full update error:', [
+                'exception' => $e,
+                'input' => $request->all()
+            ]);
+            return back()->withInput()->with('error', 'Error: '.$e->getMessage());
         }
     }
 

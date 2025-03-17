@@ -1,9 +1,22 @@
 @extends('layouts.app')
 
 @section('content')
+
     <div class="container">
         <h2>Edit Pet</h2>
+        @if($errors->any())
+            <div class="alert alert-danger">
+                @foreach($errors->all() as $error)
+                    <div>{{ $error }}</div>
+                @endforeach
+            </div>
+        @endif
 
+        @if(session('error'))
+            <div class="alert alert-danger">
+                {{ session('error') }}
+            </div>
+        @endif
         @if(session('error'))
             <div class="alert alert-danger">{{ session('error') }}</div>
         @endif
@@ -25,15 +38,26 @@
                     <option value="sold" {{ $pet['status'] == 'sold' ? 'selected' : '' }}>Sold</option>
                 </select>
             </div>
-
+            @if(isset($pet['category']))
+                <div class="mb-3">
+                    <label class="form-label">Category:</label>
+                    <input
+                        type="text"
+                        class="form-control"
+                        value="{{ $pet['category']['name'] }} (ID: {{ $pet['category']['id'] }})"
+                        readonly
+                    >
+                </div>
+            @endif
             <div class="mb-3">
-                <label class="form-label">Photo URLs:</label>
+                <label class="form-label">Photo URLs (one per line):</label>
                 <textarea
-                    name="photoUrls[]"
+                    name="photoUrls"
                     class="form-control"
                     rows="3"
                     required
-                >{{ implode("\n", $pet['photoUrls']) }}</textarea>
+                    placeholder="Example:&#10;https://fastly.picsum.photos/id/330/200/300.jpg"
+                >{{ implode("\n", $pet['photoUrls'] ?? []) }}</textarea>
             </div>
 
             <button type="submit" class="btn btn-primary">Update</button>

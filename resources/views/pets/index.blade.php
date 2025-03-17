@@ -11,7 +11,13 @@
         @if(session('error'))
             <div class="alert alert-danger">{{ session('error') }}</div>
         @endif
-
+        <div class="alert alert-dark mb-4">
+            <h4 class="alert-heading">System Category</h4>
+            <p class="mb-0">
+                All pets are filtered by hardcoded category:
+                <strong>CUSTOM_LARAVEL_APP_PETS</strong>
+            </p>
+        </div>
         <a href="{{ route('web.pets.create') }}" class="btn btn-primary mb-3">Add New Pet</a>
 
         <div class="card">

@@ -21,7 +21,19 @@
                 <label class="form-label">Pet Name:</label>
                 <input type="text" name="name" class="form-control" required>
             </div>
-
+            <div class="mb-3">
+                <label class="form-label">Your Tag:</label>
+                <input
+                    type="text"
+                    name="user_tag"
+                    class="form-control"
+                    value="{{ old('user_tag') }}"
+                    required
+                >
+                @error('user_tag')
+                <div class="text-danger">{{ $message }}</div>
+                @enderror
+            </div>
             <div class="mb-3">
                 <label class="form-label">Status:</label>
                 <select name="status" class="form-select" required>

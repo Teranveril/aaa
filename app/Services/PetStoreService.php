@@ -3,54 +3,88 @@
 namespace App\Services;
 
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Log;
 
 class PetStoreService
 {
-    protected $baseUrl;
+    protected string $baseUrl;
+    protected string $hardCategoryName = 'CUSTOM_LARAVEL_APP_PETS'; // Stała nazwa kategorii
 
     public function __construct()
     {
         $this->baseUrl = config('services.petstore.url');
     }
 
+    public function createPet(array $data): array
+    {
+        $payload = [
+            'name' => $data['name'],
+            'status' => $data['status'],
+            'photoUrls' => $data['photoUrls'],
+            'category' => [
+                'id' => 987654321, // Stałe ID kategorii
+                'name' => $this->hardCategoryName
+            ]
+        ];
+
+        $response = Http::post("{$this->baseUrl}/pet", $payload);
+        return $this->handleResponse($response);
+    }
+
+    public function getAllPets(): array
+    {
+        try {
+            $response = Http::get("{$this->baseUrl}/pet/findByStatus", [
+                'status' => 'available'
+            ]);
+
+            $allPets = $this->handleResponse($response);
+
+            // Filtruj tylko nasze pets po kategorii
+            return array_filter($allPets, function ($pet) {
+                return isset($pet['category']['name']) &&
+                    $pet['category']['name'] === $this->hardCategoryName;
+            });
+
+        } catch (\Exception $e) {
+            // Logowanie błędów
+            return [];
+        }
+    }
+
+    public function updatePet(int $id, array $data): array
+    {
+        // Pobierz aktualną kategorię
+        $currentPet = $this->getPet($id);
+
+        $payload = [
+            'id' => $id,
+            'name' => $data['name'],
+            'status' => $data['status'],
+            'photoUrls' => $data['photoUrls'],
+            'category' => $currentPet['category'] // Zachowaj istniejącą kategorię
+        ];
+
+        $response = Http::put("{$this->baseUrl}/pet", $payload);
+        return $this->handleResponse($response);
+    }
+
     private function handleResponse($response)
     {
         if ($response->failed()) {
-            $error = "PetStore API Error: {$response->status()} - {$response->body()}";
-            Log::error($error);
-            throw new \Exception($error);
+            throw new \Exception("API Error: " . $response->body());
         }
         return $response->json();
     }
-
-    public function getAllPets()
+    public function getPet(int $id)
     {
-        $response = Http::get("{$this->baseUrl}/pet/findByStatus", ['status' => 'available']);
-        return $this->handleResponse($response);
-    }
+        $pet = Http::get("{$this->baseUrl}/pet/{$id}")->json();
 
-    public function getPetById($id)
-    {
-        $response = Http::get("{$this->baseUrl}/pet/{$id}");
-        return $this->handleResponse($response);
-    }
+        if (!isset($pet['category']['name']) ||
+            $pet['category']['name'] !== $this->hardCategoryName
+        ) {
+            throw new \Exception("Pet not found in our system");
+        }
 
-    public function createPet($data)
-    {
-        $response = Http::post("{$this->baseUrl}/pet", $data);
-        return $this->handleResponse($response);
-    }
-
-    public function updatePet($id, $data)
-    {
-        $response = Http::put("{$this->baseUrl}/pet/{$id}", $data);
-        return $this->handleResponse($response);
-    }
-
-    public function deletePet($id)
-    {
-        $response = Http::delete("{$this->baseUrl}/pet/{$id}");
-        return $this->handleResponse($response);
+        return $pet;
     }
 }

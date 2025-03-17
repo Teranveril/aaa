@@ -1,17 +1,81 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Pets</title>
-</head>
-<body>
-<h1>Lista Zwierząt</h1>
-<ul>
-    @foreach ($pets as $pet)
-        <li>
-            {{ $pet['name'] ?? 'Brak nazwy' }} -
-            ID: {{ $pet['id'] ?? 'Brak ID' }}
-        </li>
-    @endforeach
-</ul>
-</body>
-</html>
+@extends('layouts.app')
+
+@section('content')
+    <div class="container">
+        <h1 class="mb-4">Pets Management</h1>
+
+        @if(session('success'))
+            <div class="alert alert-success">{{ session('success') }}</div>
+        @endif
+
+        @if(session('error'))
+            <div class="alert alert-danger">{{ session('error') }}</div>
+        @endif
+
+        <a href="{{ route('web.pets.create') }}" class="btn btn-primary mb-3">Add New Pet</a>
+
+        <div class="card">
+            <div class="card-body">
+                @if(empty($pets))
+                    <div class="alert alert-warning">No pets found in the store</div>
+                @else
+                    <table class="table table-hover">
+                        <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Name</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        @foreach($pets as $pet)
+                            <tr>
+                                <td>{{ $pet['id'] ?? 'N/A' }}</td>
+                                <td>{{ $pet['name'] ?? 'Unnamed Pet' }}</td>
+                                <td>
+                                    <span class="badge bg-{{ match($pet['status'] ?? null) {
+                                        'available' => 'success',
+                                        'pending' => 'warning',
+                                        'sold' => 'danger',
+                                        default => 'secondary'}
+                                    }}">
+                                        {{ $pet['status'] ?? 'unknown' }}
+                                    </span>
+                                </td>
+                                <td>
+                                    @if(isset($pet['id']))
+                                        <a
+                                            href="{{ route('web.pets.edit', $pet['id']) }}"
+                                            class="btn btn-sm btn-warning"
+                                        >
+                                            Edit
+                                        </a>
+                                        <form
+                                            action="{{ route('web.pets.destroy', $pet['id']) }}"
+                                            method="POST"
+                                            class="d-inline"
+                                        >
+                                            @csrf
+                                            @method('DELETE')
+                                            <button
+                                                type="submit"
+                                                class="btn btn-sm btn-danger"
+                                                onclick="return confirm('Are you sure?')"
+                                            >
+                                                Delete
+                                            </button>
+                                        </form>
+                                    @else
+                                        <span class="text-muted">Invalid record</span>
+                                    @endif
+                                </td>
+                            </tr>
+                        @endforeach
+                        </tbody>
+                    </table>
+                @endif
+            </div>
+        </div>
+    </div>
+@endsection

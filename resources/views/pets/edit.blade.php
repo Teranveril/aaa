@@ -8,32 +8,36 @@
             <div class="alert alert-danger">{{ session('error') }}</div>
         @endif
 
-        <form method="POST" action="{{ route('pets.update', $pet['id']) }}">
+        <form method="POST" action="{{ route('web.pets.update', $pet['id']) }}">
             @csrf
             @method('PUT')
 
-            <div class="form-group">
-                <label>Name:</label>
+            <div class="mb-3">
+                <label class="form-label">Pet Name:</label>
                 <input type="text" name="name" class="form-control" value="{{ $pet['name'] }}" required>
             </div>
 
-            <div class="form-group">
-                <label>Status:</label>
-                <select name="status" class="form-control" required>
+            <div class="mb-3">
+                <label class="form-label">Status:</label>
+                <select name="status" class="form-select" required>
                     <option value="available" {{ $pet['status'] == 'available' ? 'selected' : '' }}>Available</option>
                     <option value="pending" {{ $pet['status'] == 'pending' ? 'selected' : '' }}>Pending</option>
                     <option value="sold" {{ $pet['status'] == 'sold' ? 'selected' : '' }}>Sold</option>
                 </select>
             </div>
 
-            <div class="form-group">
-                <label>Photo URLs (one per line):</label>
-                <textarea name="photoUrls[]" class="form-control" rows="3" required>
-                @foreach($pet['photoUrls'] as $url){{ $url }}\n@endforeach
-            </textarea>
+            <div class="mb-3">
+                <label class="form-label">Photo URLs:</label>
+                <textarea
+                    name="photoUrls[]"
+                    class="form-control"
+                    rows="3"
+                    required
+                >{{ implode("\n", $pet['photoUrls']) }}</textarea>
             </div>
 
             <button type="submit" class="btn btn-primary">Update</button>
+            <a href="{{ route('web.pets.index') }}" class="btn btn-secondary">Cancel</a>
         </form>
     </div>
 @endsection

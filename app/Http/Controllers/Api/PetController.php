@@ -3,49 +3,65 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Services\PetService;
+use App\Services\PetStoreService;
+use Illuminate\Http\Request;
 
-class PetController extends Controller {
-    public function __construct(
-        protected PetService $petService
-    ) {}
+class PetController extends Controller
+{
+    protected $petService;
 
-    public function index() {
-        $pets = $this->petService->getPetsByStatus('available');
-        return response()->json($pets);
+    public function __construct(PetStoreService $petService)
+    {
+        $this->petService = $petService;
+    }
+
+    public function index()
+    {
+        try {
+            $pets = $this->petService->getAllPets();
+            return response()->json($pets);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
     }
 
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'name' => 'required|string',
-            'status' => 'required|in:available,pending,sold'
-        ]);
-
-        $pet = $this->petService->createPet($validated);
-        return response()->json($pet, 201);
+        try {
+            $pet = $this->petService->createPet($request->all());
+            return response()->json($pet, 201);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 400);
+        }
     }
 
-    public function show(string $id)
+    public function show($id)
     {
-        $pet = $this->petService->getPetById($id);
-        return response()->json($pet);
+        try {
+            $pet = $this->petService->getPetById($id);
+            return response()->json($pet);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 404);
+        }
     }
 
-    public function update(Request $request, string $id)
+    public function update(Request $request, $id)
     {
-        $validated = $request->validate([
-            'name' => 'string',
-            'status' => 'in:available,pending,sold'
-        ]);
-
-        $pet = $this->petService->updatePet($id, $validated);
-        return response()->json($pet);
+        try {
+            $pet = $this->petService->updatePet($id, $request->all());
+            return response()->json($pet);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 400);
+        }
     }
 
-    public function destroy(string $id)
+    public function destroy($id)
     {
-        $this->petService->deletePet($id);
-        return response()->noContent();
+        try {
+            $this->petService->deletePet($id);
+            return response()->json(null, 204);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 400);
+        }
     }
 }
